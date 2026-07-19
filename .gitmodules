@@ -1,0 +1,3 @@
+[submodule "ai-service"]
+	path = ai-service
+	url = ../ai-service
