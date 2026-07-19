@@ -115,6 +115,17 @@ export default function AiInsightPanel({ job, onJobUpdated }: Props) {
         <p className="text-label-md text-on-surface-variant truncate">
           <span className="font-medium text-primary">{job.title}</span> at {job.company}
         </p>
+        {job.link && (
+          <a
+            href={job.link.startsWith('http') ? job.link : `https://${job.link}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-secondary hover:text-primary transition-colors text-label-sm mt-sm inline-flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            View Job Posting
+          </a>
+        )}
       </div>
 
       {/* Loading state */}
