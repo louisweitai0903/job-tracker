@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: careerflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tracker_user
+      POSTGRES_PASSWORD: tracker_password
+      POSTGRES_DB: job_tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracker_user -d job_tracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: careerflow_ai
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-gemini-3.1-pro-preview}
+      - PORT=8001
+    volumes:
+      - resume_data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: careerflow_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PGHOST=db
+      - PGUSER=tracker_user
+      - PGPASSWORD=tracker_password
+      - PGDATABASE=job_tracker
+      - PGPORT=5432
+      - AI_SERVICE_URL=http://ai-service:8001
+      - PORT=8000
+      - FRONTEND_DIR=/app/frontend
+    depends_on:
+      db:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: careerflow_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_PROXY_TARGET=http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # prevent container node_modules from being overwritten by local mount
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  resume_data:

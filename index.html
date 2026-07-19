@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Job Application Hub & Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-brands fa-linkedin brand-icon"></i>
+                <div class="brand-text">
+                    <h1>Job Tracker</h1>
+                    <span>Workspace Dashboard</span>
+                </div>
+            </div>
+            <nav class="side-nav">
+                <a href="#" class="nav-item active" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" id="nav-analytics">
+                    <i class="fa-solid fa-chart-line"></i> Analytics
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-secondary btn-full" id="btn-export-sidebar">
+                    <i class="fa-solid fa-file-export"></i> Export CSV
+                </button>
+                <div class="import-container">
+                    <label for="csv-file-input" class="btn btn-outline btn-full text-center">
+                        <i class="fa-solid fa-file-import"></i> Import CSV
+                    </label>
+                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="welcome-text">
+                    <h2>Job Application Command Center</h2>
+                    <p>Track your applications, interview funnels, and job details</p>
+                </div>
+                <div class="top-actions">
+                    <button class="btn btn-primary" id="btn-add-job">
+                        <i class="fa-solid fa-plus"></i> Add Application
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Grid -->
+            <section class="stats-grid">
+                <div class="stat-card" data-status="Total">
+                    <div class="stat-icon-wrapper" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Applied</span>
+                        <h3 class="stat-value" id="stat-total">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card" data-status="Interviewing">
+                    <div class="stat-icon-wrapper" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Interviews</span>
+                        <h3 class="stat-value" id="stat-interviews">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card" data-status="Offered">
+                    <div class="stat-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Offers Received</span>
+                        <h3 class="stat-value" id="stat-offers">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card" data-status="ResponseRate">
+                    <div class="stat-icon-wrapper" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                        <i class="fa-solid fa-percent"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Conversion Rate</span>
+                        <h3 class="stat-value" id="stat-conversion">0%</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Management Section -->
+            <section class="data-section">
+                <!-- Filters & Search Header -->
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search company, job title...">
+                    </div>
+                    <div class="filter-controls">
+                        <select id="status-filter" class="form-select">
+                            <option value="All">All Statuses</option>
+                            <option value="Wishlist">Wishlist</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Interviewing">Interviewing</option>
+                            <option value="Offered">Offered</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                        <select id="sort-control" class="form-select">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="company">Company (A-Z)</option>
+                            <option value="title">Job Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Applications Table -->
+                <div class="table-container">
+                    <table class="applications-table" id="apps-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Job Title</th>
+                                <th>Status</th>
+                                <th>Date Applied</th>
+                                <th>Link</th>
+                                <th>Contact</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apps-table-body">
+                            <!-- Injected dynamically by app.js -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="table-empty-state">
+                        <i class="fa-solid fa-box-open empty-icon"></i>
+                        <h4>No Job Applications Found</h4>
+                        <p>Get started by clicking the "Add Application" button or importing your CSV file.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Slide-over Drawer for Job Details (Read & Edit) -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer" id="job-drawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title" id="drawer-title-mode">Job Details</h3>
+            <button class="btn-close" id="btn-close-drawer">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <!-- View Mode -->
+            <div id="drawer-view-mode">
+                <div class="drawer-header-info">
+                    <h2 id="view-company-name">Company</h2>
+                    <h3 id="view-job-title">Job Title</h3>
+                    <div class="badge-row">
+                        <span class="status-badge" id="view-status">Applied</span>
+                        <span class="date-badge" id="view-date">No date applied</span>
+                    </div>
+                </div>
+                <hr class="drawer-divider">
+                <div class="drawer-section">
+                    <label class="drawer-label"><i class="fa-solid fa-link"></i> Job Posting URL</label>
+                    <div id="view-job-link-container">
+                        <!-- URL link goes here -->
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <label class="drawer-label"><i class="fa-solid fa-address-card"></i> Contact Person</label>
+                    <p id="view-contact">N/A</p>
+                </div>
+                <div class="drawer-section">
+                    <label class="drawer-label"><i class="fa-solid fa-file-text"></i> Job Description</label>
+                    <div class="text-box-scroll" id="view-description">No description provided.</div>
+                </div>
+                <div class="drawer-section">
+                    <label class="drawer-label"><i class="fa-solid fa-pen-to-square"></i> Notes & Next Steps</label>
+                    <div class="text-box-scroll" id="view-notes">No notes yet.</div>
+                </div>
+                <div class="drawer-actions">
+                    <button class="btn btn-secondary" id="btn-edit-job">
+                        <i class="fa-solid fa-edit"></i> Edit Application
+                    </button>
+                    <button class="btn btn-danger" id="btn-delete-job">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- Edit / Add Mode -->
+            <form id="drawer-form" style="display: none;">
+                <input type="hidden" id="form-job-id">
+                
+                <div class="form-group">
+                    <label class="form-label" for="form-company">Company Name *</label>
+                    <input type="text" id="form-company" class="form-control" placeholder="e.g. Google" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="form-title">Job Title *</label>
+                    <input type="text" id="form-title" class="form-control" placeholder="e.g. Frontend Engineer" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label class="form-label" for="form-status">Status</label>
+                        <select id="form-status" class="form-control">
+                            <option value="Wishlist">Wishlist</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Interviewing">Interviewing</option>
+                            <option value="Offered">Offered</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-6">
+                        <label class="form-label" for="form-date">Date Applied</label>
+                        <input type="date" id="form-date" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-link">Job Posting Link</label>
+                    <input type="url" id="form-link" class="form-control" placeholder="e.g. https://linkedin.com/jobs/view/123">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-contact">Contact Person</label>
+                    <input type="text" id="form-contact" class="form-control" placeholder="e.g. John Smith (Recruiter)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-description">Job Description</label>
+                    <textarea id="form-description" class="form-control form-textarea" placeholder="Paste the job description details here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-notes">Notes & Next Steps</label>
+                    <textarea id="form-notes" class="form-control form-textarea" placeholder="Interview preparation, resume versions, follow-up dates..."></textarea>
+                </div>
+
+                <div class="drawer-actions">
+                    <button type="submit" class="btn btn-primary" id="btn-save-job">
+                        <i class="fa-solid fa-save"></i> Save Application
+                    </button>
+                    <button type="button" class="btn btn-outline" id="btn-cancel-edit">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Analytics Dashboard Modal -->
+    <div class="modal-overlay" id="analytics-modal-overlay"></div>
+    <div class="modal" id="analytics-modal">
+        <div class="modal-header">
+            <h3>Detailed Search Analytics</h3>
+            <button class="btn-close" id="btn-close-analytics">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="analytics-layout">
+                <div class="chart-container-wrapper">
+                    <h4>Status Distribution</h4>
+                    <div class="donut-chart-box">
+                        <svg viewBox="0 0 36 36" class="circular-chart" id="analytics-donut">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <!-- Injected by app.js -->
+                            <g id="donut-segments"></g>
+                        </svg>
+                        <div class="donut-center-text">
+                            <span class="donut-sub">Total</span>
+                            <span class="donut-num" id="donut-total-num">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-legend-container">
+                    <h4>Status Metrics</h4>
+                    <ul class="analytics-legend" id="analytics-legend-list">
+                        <!-- Injected by app.js -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Script -->
+    <script src="app.js"></script>
+</body>
+</html>
