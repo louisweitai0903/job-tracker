@@ -1,65 +1,73 @@
-# LinkedIn Job Application Tracker
+# CareerFlow AI Job Tracker
 
-A high-fidelity toolset designed to help job seekers track, organize, and analyze their LinkedIn job applications. 
+A high-fidelity, AI-powered toolset designed to help job seekers track, organize, and analyze their job applications. CareerFlow leverages Google Gemini 2.5 Pro to parse your resume, scrape job descriptions from URLs (like LinkedIn), and provide instant fit scoring, skill gap analysis, and tailored improvement tips.
 
-This project provides two main components:
-1. **Google Sheets Compatible Excel Spreadsheet**: A professionally formatted Excel template (`job_applications_tracker.xlsx`) featuring dropdown lists for status tracking and conditional formatting that translates perfectly when imported to Google Sheets.
-2. **Interactive Web Dashboard**: A premium, local-first web interface (`index.html`) backed by a native **PostgreSQL** database and served by a local **Node.js/Express** server. Features real-time visual charts, searchable/filterable job cards, and CSV export/import options.
+This repository contains the **React Frontend** and the **Rust API Gateway**, operating seamlessly alongside a dedicated [Python AI Microservice](https://github.com/YOUR-USERNAME/ai-service).
 
 ---
 
 ## Features
 
-### 1. Excel / Google Sheets Template
-- **Preconfigured Columns**: Company, Job Title, Status, Applied Date, Job URL, Job Description, Contact Name, Notes.
-- **Data Validation**: Dropdown menus for the "Status" column to keep tracking uniform.
-- **Conditional Formatting**: Automatically highlights row backgrounds based on application state (e.g., green for Offered, yellow for Interviewing, gray for Rejected).
+### 1. Full-Stack Web Dashboard
+- **Glassmorphic UI**: Vibrant modern styling with responsive design built using React and TailwindCSS.
+- **Analytics Cards**: Real-time stats on your application pipeline (Applied, Interviewing, Offered).
+- **PostgreSQL Database Backend**: Robust, persistent data storage using a high-performance Rust (`Axum` + `SQLx`) backend.
 
-### 2. Full-Stack Web Dashboard
-- **Glassmorphic UI**: Vibrant modern styling with responsiveness.
-- **Analytics Cards**: Real-time stats on application status distribution and conversion rates.
-- **PostgreSQL Database backend**: All application data persists inside a local PostgreSQL instance (no dummy mock data; starts clean).
-- **Dynamic Database Initialization**: The table structure is automatically created on server boot (no SQL files to import manually).
-- **Interactive Table & Cards**: Quick actions to filter by status, search by company/job title, and view complete job descriptions.
-- **CSV Data sync**: Export data to a standard CSV, or import a CSV directly (enabling easy sync with Google Sheets).
+### 2. AI-Powered Application Tracking
+- **Resume Parsing**: Upload your PDF resume, and the AI extracts structured skills, experience, and education. You can manually tweak this extracted JSON profile directly from the UI.
+- **Smart URL Scraping**: Simply paste a LinkedIn job URL. The Rust backend safely scrapes the text using realistic browser headers, and the AI service automatically analyzes the role.
+- **Deep Insights**: Receive an instant 0-100 fit score, an analysis of required skills you're missing, application urgency levels, and a summary of the hiring company's background via Google Search Grounding.
+- **Inline Status Editing**: Quickly bump applications through your pipeline using intuitive inline dropdowns on the dashboard job cards.
+
+---
+
+## Architecture Overview
+
+The system runs on a microservice architecture entirely orchestrated by Docker Compose:
+- **Frontend (`:3000`)**: React + TypeScript + Vite.
+- **Backend (`:8000`)**: Rust + Axum. Serves as the database connection, API gateway, and static file server for production builds.
+- **AI Service (`:8001`)**: Python + FastAPI. Hosted via a Git Submodule. Handles all Gemini LLM interactions.
+- **Database (`:5432`)**: PostgreSQL 15.
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-Make sure you have [Homebrew](https://brew.sh) installed on your macOS.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed on your machine.
+- A valid **Gemini API Key**.
 
-### Database Setup
-1. Install PostgreSQL 15:
-   ```bash
-   brew install postgresql@15
-   ```
-2. Start the database service:
-   ```bash
-   brew services start postgresql@15
-   ```
-3. Create the database for the application:
-   ```bash
-   /opt/homebrew/opt/postgresql@15/bin/createdb job_tracker
-   ```
+### 1. Clone the Repository
+Since the AI service is managed as a Git Submodule, be sure to clone recursively:
+```bash
+git clone --recursive https://github.com/YOUR-USERNAME/job-tracker.git
+cd job-tracker
+```
+*(If you already cloned without recursive, simply run `git submodule update --init --recursive`)*
 
-### Running the Web Application
-1. Install the backend dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the Express server:
-   ```bash
-   node server.js
-   ```
-3. Open your browser and navigate to `http://localhost:8000`.
-   *(Note: The database tables will be initialized automatically on startup).*
+### 2. Environment Setup
+Copy the example environment file and fill in your Gemini API Key:
+```bash
+cp .env.example .env
+```
+Edit `.env`:
+```env
+GEMINI_API_KEY="your_api_key_here"
+```
+
+### 3. Run the Application
+Start the entire stack using Docker Compose:
+```bash
+docker compose up -d --build
+```
+The application will be available at `http://localhost:8000`.
 
 ---
 
 ## Technical Stack
-- **Spreadsheet Generator**: Python 3, `openpyxl`
-- **Backend Server**: Node.js, Express, `pg` (PostgreSQL Client)
-- **Frontend Client**: HTML5, CSS3 (Vanilla), JavaScript (ES6)
-- **Data Storage**: Local PostgreSQL Database (database: `job_tracker`)
+
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS.
+- **Backend API Gateway**: Rust, Axum, SQLx.
+- **AI Microservice**: Python, FastAPI, Google GenAI SDK (Gemini 2.5 Pro).
+- **Data Storage**: PostgreSQL 15.
+- **Deployment**: Docker Compose.
