@@ -15,7 +15,7 @@ export default function AddJobModal({ onClose, onJobCreated }: Props) {
     title: '',
     link: '',
     status: 'Applied',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     notes: '',
   })
   
