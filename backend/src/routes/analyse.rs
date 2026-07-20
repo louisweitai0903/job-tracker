@@ -4,17 +4,13 @@ use axum::{
     Json,
 };
 use serde_json::{json, Value};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 
 use crate::ai_client::AiClient;
 use crate::models::AnalyseTextRequest;
+use crate::AppState;
 
-/// Combined state for routes that need both the DB pool and the AI client.
-#[derive(Clone)]
-pub struct AnalyseState {
-    pub pool: PgPool,
-    pub ai: AiClient,
-}
+const SINGLETON_ID: &str = "my_profile";
 
 /// Minimal HTML tag stripper — no external regex dependency required.
 fn strip_html_tags(html: &str) -> String {
@@ -53,13 +49,31 @@ async fn scrape_job_text(url: &str) -> Option<String> {
     }
 }
 
+async fn get_profile(pool: &PgPool) -> Result<Value, (StatusCode, Json<Value>)> {
+    let row = sqlx::query("SELECT data FROM profile WHERE id = $1")
+        .bind(SINGLETON_ID)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))))?;
+
+    match row {
+        Some(r) => {
+            let data: Value = r.get("data");
+            Ok(data)
+        }
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "No resume found. Please upload your resume first in the profile section."})))),
+    }
+}
+
 async fn run_analysis(
     pool: &PgPool,
     ai: &AiClient,
     job_id: &str,
     job_text: &str,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let analysis = ai.analyse_job(job_text).await.map_err(|e| {
+    let profile = get_profile(pool).await?;
+
+    let analysis = ai.analyse_job(&profile, job_text).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error": e.to_string()})),
@@ -126,7 +140,7 @@ async fn run_analysis(
 }
 
 pub async fn analyse_by_url(
-    State(state): State<AnalyseState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let job = sqlx::query_as::<_, crate::models::Job>(
@@ -170,7 +184,7 @@ pub async fn analyse_by_url(
 }
 
 pub async fn analyse_by_text(
-    State(state): State<AnalyseState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<AnalyseTextRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
@@ -192,9 +206,11 @@ pub struct ParseUrlRequest {
 }
 
 pub async fn parse_url_and_fill(
-    State(state): State<AnalyseState>,
+    State(state): State<AppState>,
     Json(req): Json<ParseUrlRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let profile = get_profile(&state.pool).await?;
+
     let mut job_text = req.job_text.unwrap_or_default();
     
     if job_text.trim().is_empty() {
@@ -216,7 +232,7 @@ pub async fn parse_url_and_fill(
         ));
     }
 
-    let parsed = state.ai.parse_job_url(&job_text).await.map_err(|e| {
+    let parsed = state.ai.parse_job_url(&profile, &job_text).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error": e.to_string()})),

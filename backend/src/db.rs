@@ -55,6 +55,16 @@ pub async fn init_schema(pool: &PgPool) -> Result<()> {
         .await;
     }
 
+    // Profile table to store singleton resume
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS profile (
+            id VARCHAR(50) PRIMARY KEY,
+            data JSONB NOT NULL
+        );"
+    )
+    .execute(pool)
+    .await?;
+
     tracing::info!("Database schema initialised.");
     Ok(())
 }

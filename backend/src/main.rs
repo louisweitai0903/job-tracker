@@ -9,12 +9,17 @@ use tower_http::{
 };
 
 mod ai_client;
+mod ai_schemas;
 mod config;
 mod db;
 mod models;
 mod routes;
 
-use routes::analyse::AnalyseState;
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: sqlx::PgPool,
+    pub ai: ai_client::AiClient,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -37,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
         .expect("Failed to initialise schema");
 
     let ai = ai_client::AiClient::new(cfg.ai_service_url.clone());
-    let analyse_state = AnalyseState {
+    let app_state = AppState {
         pool: pool.clone(),
         ai: ai.clone(),
     };
@@ -59,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(pool);
 
-    // Resume proxy — state: AiClient
+    // Resume proxy — state: AppState
     let resume_router = Router::new()
         .route(
             "/api/resume",
@@ -68,9 +73,9 @@ async fn main() -> anyhow::Result<()> {
                 .put(routes::resume::put_resume)
                 .delete(routes::resume::delete_resume),
         )
-        .with_state(ai);
+        .with_state(app_state.clone());
 
-    // AI analysis — state: AnalyseState (pool + ai)
+    // AI analysis — state: AppState
     let analyse_router = Router::new()
         .route(
             "/api/jobs/:id/analyse",
@@ -84,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
             "/api/jobs/parse-url",
             post(routes::analyse::parse_url_and_fill),
         )
-        .with_state(analyse_state);
+        .with_state(app_state.clone());
 
     // Merge all routers; serve the frontend as a fallback for any unmatched path
     let app = Router::new()
