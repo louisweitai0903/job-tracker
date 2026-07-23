@@ -70,7 +70,6 @@ export default function JobCard({ job, isSelected, onSelect, onUpdateStatus }: P
                 job.ai_fit_score >= 60 ? 'bg-amber-100 text-amber-700' :
                 'bg-orange-100 text-orange-700'
               }`}>
-                {job.ai_fit_score}% Fit
               </span>
             )}
           </div>
