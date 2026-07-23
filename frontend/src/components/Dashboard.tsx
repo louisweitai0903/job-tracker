@@ -12,20 +12,48 @@ interface Props {
 
 export default function Dashboard({ jobs, search, onJobsChange }: Props) {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('All')
+  const [sortBy, setSortBy] = useState<string>('date_desc')
 
-  const filtered = useMemo(
-    () =>
-      jobs.filter(
-        j =>
-          j.title.toLowerCase().includes(search.toLowerCase()) ||
-          j.company.toLowerCase().includes(search.toLowerCase())
-      ),
-    [jobs, search]
-  )
+  const filtered = useMemo(() => {
+    let result = jobs.filter(
+      j =>
+        j.title.toLowerCase().includes(search.toLowerCase()) ||
+        j.company.toLowerCase().includes(search.toLowerCase())
+    )
 
-  const interviewingCount = jobs.filter(j => j.status === 'Interviewing').length
-  const offeredCount = jobs.filter(j => j.status === 'Offered').length
+    if (statusFilter !== 'All') {
+      result = result.filter(j => j.status === statusFilter)
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === 'fit_desc') {
+        return (b.ai_fit_score || 0) - (a.ai_fit_score || 0)
+      } else if (sortBy === 'fit_asc') {
+        return (a.ai_fit_score || 0) - (b.ai_fit_score || 0)
+      } else {
+        // default date_desc
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+        return dateB - dateA
+      }
+    })
+
+    return result
+  }, [jobs, search, statusFilter, sortBy])
+
   const appliedCount = jobs.filter(j => j.status === 'Applied').length
+  const interviewingCount = jobs.filter(j => j.status === 'Interviewing').length
+  const offeredCount = jobs.filter(j => j.status === 'Offer' || j.status === 'Offered').length
+  const rejectedCount = jobs.filter(j => j.status === 'Rejected').length
+
+  const tabs = [
+    { label: 'All', count: jobs.length },
+    { label: 'Applied', count: appliedCount },
+    { label: 'Interviewing', count: interviewingCount },
+    { label: 'Offer', count: offeredCount },
+    { label: 'Rejected', count: rejectedCount },
+  ]
 
   function handleJobUpdated(updated: Job) {
     onJobsChange(jobs.map(j => (j.id === updated.id ? updated : j)))
@@ -45,27 +73,48 @@ export default function Dashboard({ jobs, search, onJobsChange }: Props) {
           </p>
         </div>
 
-        {/* Stat badges */}
-        <div className="flex gap-sm flex-wrap justify-end">
-          {appliedCount > 0 && (
-            <div className="bg-surface-container-highest px-md py-sm rounded-lg flex items-center gap-sm text-label-sm text-on-surface-variant">
-              <span className="w-2 h-2 rounded-full bg-outline-variant" />
-              {appliedCount} Applied
-            </div>
-          )}
-          {interviewingCount > 0 && (
-            <div className="bg-secondary-fixed px-md py-sm rounded-lg flex items-center gap-sm text-label-sm text-on-secondary-fixed">
-              <span className="w-2 h-2 rounded-full bg-secondary" />
-              {interviewingCount} Interviewing
-            </div>
-          )}
-          {offeredCount > 0 && (
-            <div className="bg-[#d1e7dd] px-md py-sm rounded-lg flex items-center gap-sm text-label-sm text-[#0f5132]">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              {offeredCount} Offered
-            </div>
-          )}
+        {/* Sort and Filters */}
+        <div className="flex items-center gap-md">
+          <div className="flex items-center gap-sm bg-surface-container-low px-md py-sm rounded-lg border border-outline-variant/30">
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">sort</span>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="bg-transparent text-label-md text-primary outline-none cursor-pointer"
+            >
+              <option value="date_desc">Newest First</option>
+              <option value="fit_desc">Highest Fit Score</option>
+              <option value="fit_asc">Lowest Fit Score</option>
+            </select>
+          </div>
         </div>
+      </div>
+
+      {/* Gmail-like Tabs */}
+      <div className="flex gap-md mb-lg border-b border-outline-variant/30">
+        {tabs.map(tab => (
+          <button
+            key={tab.label}
+            onClick={() => setStatusFilter(tab.label)}
+            className={`pb-sm px-sm text-label-md font-medium flex items-center gap-xs transition-colors relative ${
+              statusFilter === tab.label
+                ? 'text-primary'
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            {tab.label}
+            <span className={`px-xs py-[2px] rounded text-[11px] ${
+              statusFilter === tab.label 
+                ? 'bg-primary/10 text-primary' 
+                : 'bg-surface-container-highest text-on-surface-variant'
+            }`}>
+              {tab.count}
+            </span>
+            {statusFilter === tab.label && (
+              <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary rounded-t" />
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-12 gap-gutter">
@@ -77,11 +126,11 @@ export default function Dashboard({ jobs, search, onJobsChange }: Props) {
                 work_outline
               </span>
               <p className="text-headline-md text-primary mb-sm">
-                {search ? 'No matching applications' : 'No applications yet'}
+                {search || statusFilter !== 'All' ? 'No matching applications' : 'No applications yet'}
               </p>
               <p className="text-body-md text-on-surface-variant">
-                {search
-                  ? 'Try a different search term.'
+                {search || statusFilter !== 'All'
+                  ? 'Try a different search term or filter.'
                   : 'Click "New Application" in the sidebar to get started.'}
               </p>
             </div>

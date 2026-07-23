@@ -24,6 +24,13 @@ function getAccentClass(urgency?: string): string {
   return 'border-l-[4px] border-l-outline-variant'
 }
 
+function getFitScoreBorderClass(score?: number): string {
+  if (score === undefined || score === null) return 'border-outline-variant/30'
+  if (score >= 80) return 'border-green-500/60 shadow-[0_0_8px_rgba(34,197,94,0.15)]'
+  if (score >= 60) return 'border-amber-400/60 shadow-[0_0_8px_rgba(251,191,36,0.15)]'
+  return 'border-orange-500/60 shadow-[0_0_8px_rgba(249,115,22,0.15)]'
+}
+
 const LOGO_COLORS = [
   'bg-blue-100 text-blue-700',
   'bg-purple-100 text-purple-700',
@@ -35,12 +42,13 @@ const LOGO_COLORS = [
 export default function JobCard({ job, isSelected, onSelect, onUpdateStatus }: Props) {
   const colorIdx = job.company.charCodeAt(0) % LOGO_COLORS.length
   const accentClass = getAccentClass(job.ai_urgency_level)
+  const fitScoreBorder = getFitScoreBorderClass(job.ai_fit_score)
 
   return (
     <div
       onClick={() => onSelect(job)}
-      className={`group cursor-pointer bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-card hover:shadow-card-hover transition-all flex items-center justify-between pl-0 pr-lg py-lg ${accentClass} ${
-        isSelected ? 'ring-2 ring-secondary/30 bg-surface-container-low' : ''
+      className={`group cursor-pointer bg-surface-container-lowest rounded-xl border transition-all flex items-center justify-between pl-0 pr-lg py-lg ${accentClass} ${fitScoreBorder} ${
+        isSelected ? 'ring-2 ring-secondary/30 bg-surface-container-low' : 'hover:shadow-card-hover'
       }`}
     >
       {/* Left content */}
@@ -52,9 +60,20 @@ export default function JobCard({ job, isSelected, onSelect, onUpdateStatus }: P
           {job.company.charAt(0).toUpperCase()}
         </div>
         <div>
-          <h3 className="text-headline-md text-primary group-hover:text-secondary transition-colors leading-snug">
-            {job.title}
-          </h3>
+          <div className="flex items-center gap-sm">
+            <h3 className="text-headline-md text-primary group-hover:text-secondary transition-colors leading-snug">
+              {job.title}
+            </h3>
+            {job.ai_fit_score !== undefined && job.ai_fit_score !== null && (
+              <span className={`px-xs py-[2px] rounded text-label-sm font-bold ${
+                job.ai_fit_score >= 80 ? 'bg-green-100 text-green-700' :
+                job.ai_fit_score >= 60 ? 'bg-amber-100 text-amber-700' :
+                'bg-orange-100 text-orange-700'
+              }`}>
+                {job.ai_fit_score}% Fit
+              </span>
+            )}
+          </div>
           <p className="text-label-md text-on-surface-variant mt-xs">
             {job.company}
             {job.created_at ? ` · ${timeAgo(job.created_at)}` : ''}
