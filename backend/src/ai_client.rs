@@ -16,7 +16,7 @@ impl AiClient {
         Self { http, base_url }
     }
 
-    pub async fn upload_resume_bytes(&self, filename: &str, bytes: Vec<u8>) -> Result<Value> {
+    pub async fn upload_resume_bytes(&self, filename: &str, bytes: Vec<u8>, model: Option<&str>) -> Result<Value> {
         use crate::ai_schemas::resume_schema;
         
         let schema_str = serde_json::to_string(&resume_schema())?;
@@ -27,11 +27,15 @@ impl AiClient {
         
         let form = reqwest::multipart::Form::new().part("file", part);
         
-        let url = format!("{}?system_prompt={}&schema_definition={}", 
+        let mut url = format!("{}?system_prompt={}&schema_definition={}", 
             format!("{}/extract-file", self.base_url),
             "Extract structured data accurately from the provided resume PDF. Be thorough and specific. Score profile_strength_score from 0-100 based on completeness, specificity, and measurable impact. Write profile_strength_tip as one concrete, actionable sentence to improve job match rates.",
             urlencoding::encode(&schema_str)
         );
+
+        if let Some(m) = model {
+            url = format!("{}&model={}", url, urlencoding::encode(m));
+        }
 
         let res = self
             .http
@@ -50,7 +54,7 @@ impl AiClient {
         Ok(json["result"].clone())
     }
 
-    pub async fn analyse_job(&self, resume_json: &Value, job_text: &str) -> Result<Value> {
+    pub async fn analyse_job(&self, resume_json: &Value, job_text: &str, model: Option<&str>) -> Result<Value> {
         use crate::ai_schemas::job_analysis_schema;
         
         let skills_list = resume_json["skills"].as_array().unwrap_or(&vec![]).iter().filter_map(|s| s["name"].as_str()).collect::<Vec<_>>().join(", ");
@@ -64,16 +68,19 @@ impl AiClient {
             "job_description": job_text,
         });
 
-        let body = serde_json::json!({
-            "context": context,
-            "system_prompt": "You are an expert career coach and talent analyst. Analyse the job description against the candidate resume profile and return a structured fit analysis. Be specific, honest, and insightful. fit_score is 0-100. urgency_level: high=strong match pursue immediately, medium=worth applying with preparation, low=significant gaps exist.",
-            "schema_definition": job_analysis_schema(false)
-        });
-
+        let mut body_map = serde_json::Map::new();
+        body_map.insert("context".to_string(), context);
+        body_map.insert("system_prompt".to_string(), serde_json::json!("You are an expert career coach and talent analyst. Analyse the job description against the candidate resume profile and return a structured fit analysis. Be specific, honest, and insightful. fit_score is 0-100. urgency_level: high=strong match pursue immediately, medium=worth applying with preparation, low=significant gaps exist."));
+        body_map.insert("schema_definition".to_string(), job_analysis_schema(false));
+        if let Some(m) = model {
+            body_map.insert("model".to_string(), serde_json::json!(m));
+        }
+        
+        // Use /analyze since we passed context
         let res = self
             .http
-            .post(format!("{}/search", self.base_url)) // We use /search because we want the company background grounding!
-            .json(&body)
+            .post(format!("{}/analyze", self.base_url)) 
+            .json(&serde_json::Value::Object(body_map))
             .send()
             .await?;
             
@@ -86,7 +93,7 @@ impl AiClient {
         Ok(json["result"].clone())
     }
 
-    pub async fn parse_job_url(&self, resume_json: &Value, job_text: &str) -> Result<Value> {
+    pub async fn parse_job_url(&self, resume_json: &Value, job_text: &str, model: Option<&str>) -> Result<Value> {
         use crate::ai_schemas::job_analysis_schema;
         
         let skills_list = resume_json["skills"].as_array().unwrap_or(&vec![]).iter().filter_map(|s| s["name"].as_str()).collect::<Vec<_>>().join(", ");
@@ -100,20 +107,18 @@ impl AiClient {
             "job_description": job_text,
         });
 
-        let body = serde_json::json!({
-            // /search requires a "query", we will map context to it in our generic endpoint if needed, wait /search in Python expects "query" string. 
-            // The prompt we passed earlier used data context. 
-            // Wait, let's look at /search in python: it just takes `query` and uses `use_google_search=True`. But it doesn't take `data`.
-            // Let's pass the context inside the query.
-            "query": serde_json::to_string(&context).unwrap_or_default(),
-            "system_prompt": "You are an expert career coach and talent analyst. Analyse the job description against the candidate resume profile and return a structured fit analysis. You MUST also extract the correct company name and job title from the job text. Be specific, honest, and insightful. fit_score is 0-100. urgency_level: high=strong match pursue immediately, medium=worth applying with preparation, low=significant gaps exist.",
-            "schema_definition": job_analysis_schema(true)
-        });
+        let mut body_map = serde_json::Map::new();
+        body_map.insert("query".to_string(), serde_json::json!(serde_json::to_string(&context).unwrap_or_default()));
+        body_map.insert("system_prompt".to_string(), serde_json::json!("You are an expert career coach and talent analyst. Analyse the job description against the candidate resume profile and return a structured fit analysis. You MUST also extract the correct company name and job title from the job text. Be specific, honest, and insightful. fit_score is 0-100. urgency_level: high=strong match pursue immediately, medium=worth applying with preparation, low=significant gaps exist."));
+        body_map.insert("schema_definition".to_string(), job_analysis_schema(true));
+        if let Some(m) = model {
+            body_map.insert("model".to_string(), serde_json::json!(m));
+        }
 
         let res = self
             .http
             .post(format!("{}/search", self.base_url))
-            .json(&body)
+            .json(&serde_json::Value::Object(body_map))
             .send()
             .await?;
             

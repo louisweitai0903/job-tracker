@@ -58,6 +58,10 @@ export default function ProfilePage({ resume, onResumeChange }: Props) {
   const [rawJson, setRawJson] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const [preferredModel, setPreferredModel] = useState(() => 
+    localStorage.getItem('preferred_ai_model') || 'gemini-2.5-pro'
+  )
+
   useEffect(() => {
     if (resume && !isEditingRaw) {
       setRawJson(JSON.stringify(resume, null, 2))
@@ -345,6 +349,26 @@ export default function ProfilePage({ resume, onResumeChange }: Props) {
 
         {/* Right: Profile Strength + Skills */}
         <div className="col-span-12 lg:col-span-4 space-y-xl">
+          {/* AI Model Selector */}
+          <div className="bg-surface-container-lowest rounded-xl p-lg shadow-card border border-outline-variant/20">
+            <h3 className="text-headline-md text-primary mb-md">AI Model</h3>
+            <p className="text-body-md text-on-surface-variant mb-md">
+              Choose the model used for parsing resumes and analyzing jobs.
+            </p>
+            <select
+              value={preferredModel}
+              onChange={e => {
+                setPreferredModel(e.target.value)
+                localStorage.setItem('preferred_ai_model', e.target.value)
+              }}
+              className="w-full bg-surface-container-low text-primary border border-outline-variant rounded-lg p-sm focus:border-secondary outline-none"
+            >
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Recommended)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Faster)</option>
+              <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Experimental)</option>
+            </select>
+          </div>
+
           {/* Profile Strength Card */}
           {resume && (
             <div className="glass-panel rounded-2xl p-lg sticky top-24">

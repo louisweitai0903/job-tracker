@@ -68,4 +68,10 @@ pub struct UpdateJobRequest {
 #[derive(Debug, Deserialize)]
 pub struct AnalyseTextRequest {
     pub job_text: String,
+    pub model: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AnalyseUrlRequest {
+    pub model: Option<String>,
 }

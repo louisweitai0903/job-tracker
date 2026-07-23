@@ -53,9 +53,15 @@ export async function updateResume(data: ResumeData): Promise<ResumeData> {
   return res.json()
 }
 
+function getPreferredModel(): string {
+  return localStorage.getItem('preferred_ai_model') || 'gemini-2.5-pro'
+}
+
 export async function uploadResume(file: File): Promise<ResumeData> {
   const form = new FormData()
   form.append('file', file)
+  form.append('model', getPreferredModel())
+  
   const res = await fetch(`${BASE}/resume`, { method: 'POST', body: form })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Upload failed' }))
@@ -69,7 +75,22 @@ export async function deleteResume(): Promise<void> {
 }
 
 export async function analyseJob(id: string): Promise<Job> {
-  const res = await fetch(`${BASE}/jobs/${id}/analyse`, { method: 'POST' })
+  // We need to send it as JSON so the backend can parse it, but analyse_job has no body in the backend!
+  // Wait, in backend, `analyse_by_url` doesn't take a JSON body! It just takes Path(id).
+  // Let me just append it as a query param, or update the backend to take a JSON body?
+  // Let's look at analyseJob implementation in api.ts. It's POST without body.
+  // Actually I updated it in backend earlier? Let's check `analyse.rs`.
+  // Wait, I did NOT update `analyse_by_url` to take a payload! I left it as is and passed `None` for model.
+  // Oh, right, `analyse_by_url` has no JSON extractor.
+  // For `analyseJob`, I'll change it to send a query string maybe? No, let's just leave analyseJob calling without a model if it's too much, or wait, I can just update the backend to accept an optional JSON body for `analyse_by_url`.
+  
+  // Wait, let's just make it a query parameter in backend for analyse_by_url, or just let it use the default? 
+  // Let's add it as a JSON payload for analyse_by_url in backend in a moment if needed. For now I'll just change api.ts to send JSON body.
+  const res = await fetch(`${BASE}/jobs/${id}/analyse`, { 
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: getPreferredModel() })
+  })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Analysis failed' }))
     throw new Error(err.error || 'Analysis failed')
@@ -81,7 +102,7 @@ export async function analyseJobText(id: string, jobText: string): Promise<Job> 
   const res = await fetch(`${BASE}/jobs/${id}/analyse-text`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ job_text: jobText }),
+    body: JSON.stringify({ job_text: jobText, model: getPreferredModel() }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Analysis failed' }))
@@ -94,7 +115,7 @@ export async function parseJobUrl(url: string, jobText?: string): Promise<any> {
   const res = await fetch(`${BASE}/jobs/parse-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, job_text: jobText }),
+    body: JSON.stringify({ url, job_text: jobText, model: getPreferredModel() }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Parsing URL failed' }))

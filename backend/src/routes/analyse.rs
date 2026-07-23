@@ -70,10 +70,11 @@ async fn run_analysis(
     ai: &AiClient,
     job_id: &str,
     job_text: &str,
+    model: Option<&str>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let profile = get_profile(pool).await?;
 
-    let analysis = ai.analyse_job(&profile, job_text).await.map_err(|e| {
+    let analysis = ai.analyse_job(&profile, job_text, model).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error": e.to_string()})),
@@ -142,6 +143,7 @@ async fn run_analysis(
 pub async fn analyse_by_url(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    req_opt: Option<Json<crate::models::AnalyseUrlRequest>>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let job = sqlx::query_as::<_, crate::models::Job>(
         "SELECT * FROM jobs WHERE id=$1",
@@ -180,7 +182,8 @@ pub async fn analyse_by_url(
         ));
     }
 
-    run_analysis(&state.pool, &state.ai, &id, &job_text).await
+    let model = req_opt.and_then(|r| r.0.model);
+    run_analysis(&state.pool, &state.ai, &id, &job_text, model.as_deref()).await
 }
 
 pub async fn analyse_by_text(
@@ -196,13 +199,14 @@ pub async fn analyse_by_text(
             })),
         ));
     }
-    run_analysis(&state.pool, &state.ai, &id, &req.job_text).await
+    run_analysis(&state.pool, &state.ai, &id, &req.job_text, req.model.as_deref()).await
 }
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ParseUrlRequest {
     pub url: Option<String>,
     pub job_text: Option<String>,
+    pub model: Option<String>,
 }
 
 pub async fn parse_url_and_fill(
@@ -232,7 +236,7 @@ pub async fn parse_url_and_fill(
         ));
     }
 
-    let parsed = state.ai.parse_job_url(&profile, &job_text).await.map_err(|e| {
+    let parsed = state.ai.parse_job_url(&profile, &job_text, req.model.as_deref()).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error": e.to_string()})),
