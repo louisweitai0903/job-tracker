@@ -1,5 +1,5 @@
 const DEFAULT_API_URL = 'http://localhost:8000';
-const DEFAULT_MODEL = 'gemini-2.5-pro';
+const DEFAULT_MODEL = 'gemini-3.1-pro-preview';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
@@ -67,7 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, model: aiModel })
       });
-      if (!parseRes.ok) throw new Error('Failed to parse job URL.');
+      if (!parseRes.ok) {
+        const err = await parseRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to parse job URL.');
+      }
       const parsedData = await parseRes.json();
 
       if (!parsedData.company || !parsedData.title) {
@@ -89,7 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
           date: today
         })
       });
-      if (!createRes.ok) throw new Error('Failed to save job to database.');
+      if (!createRes.ok) {
+        const err = await createRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save job to database.');
+      }
       const createdJob = await createRes.json();
 
       // 3. Analyze Job (optional but great for fit score)
@@ -101,8 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
       if (!analyzeRes.ok) {
-        // If analysis fails, the job was still saved
-        showStatus('Saved, but AI analysis failed.', 'error');
+        const err = await analyzeRes.json().catch(() => ({}));
+        showStatus(`Saved, but AI analysis failed: ${err.error || 'Unknown error'}`, 'error');
         return;
       }
 

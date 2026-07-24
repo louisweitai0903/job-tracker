@@ -59,7 +59,7 @@ export default function ProfilePage({ resume, onResumeChange }: Props) {
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const [preferredModel, setPreferredModel] = useState(() => 
-    localStorage.getItem('preferred_ai_model') || 'gemini-2.5-pro'
+    localStorage.getItem('preferred_ai_model') || 'gemini-3.1-pro-preview'
   )
 
   useEffect(() => {
@@ -357,15 +357,11 @@ export default function ProfilePage({ resume, onResumeChange }: Props) {
             </p>
             <select
               value={preferredModel}
-              onChange={e => {
-                setPreferredModel(e.target.value)
-                localStorage.setItem('preferred_ai_model', e.target.value)
-              }}
-              className="w-full bg-surface-container-low text-primary border border-outline-variant rounded-lg p-sm focus:border-secondary outline-none"
+              onChange={e => handleModelChange(e.target.value)}
+              className="bg-transparent text-label-md text-primary outline-none cursor-pointer"
             >
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Recommended)</option>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Faster)</option>
-              <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Experimental)</option>
+              <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Recommended)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
             </select>
           </div>
 

@@ -53,8 +53,8 @@ export async function updateResume(data: ResumeData): Promise<ResumeData> {
   return res.json()
 }
 
-function getPreferredModel(): string {
-  return localStorage.getItem('preferred_ai_model') || 'gemini-2.5-pro'
+export function getPreferredModel(): string {
+  return localStorage.getItem('preferred_ai_model') || 'gemini-3.1-pro-preview'
 }
 
 export async function uploadResume(file: File): Promise<ResumeData> {
