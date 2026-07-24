@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CareerFlow</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <span class="material-symbols-outlined logo-icon">trending_up</span>
+      CareerFlow
+    </div>
+    <button id="settingsBtn" class="icon-btn" title="Settings">
+      <span class="material-symbols-outlined">settings</span>
+    </button>
+  </div>
+
+  <div id="mainView" class="view active">
+    <p class="description">Paste a job posting URL to automatically parse and track it in your dashboard.</p>
+    
+    <div class="input-group">
+      <input type="url" id="urlInput" placeholder="https://example.com/job..." autocomplete="off">
+    </div>
+
+    <button id="addBtn" class="btn primary">
+      <span class="material-symbols-outlined btn-icon">add</span>
+      Add Job
+    </button>
+
+    <div id="statusArea" class="status-area hidden">
+      <div class="spinner" id="spinner"></div>
+      <span id="statusText"></span>
+    </div>
+  </div>
+
+  <div id="settingsView" class="view hidden">
+    <h3 class="section-title">Settings</h3>
+    
+    <div class="input-group">
+      <label for="apiUrlInput">Backend API URL</label>
+      <input type="url" id="apiUrlInput" placeholder="http://localhost:8000">
+    </div>
+
+    <div class="input-group">
+      <label for="modelSelect">AI Model</label>
+      <select id="modelSelect">
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button id="saveSettingsBtn" class="btn primary">Save</button>
+      <button id="cancelSettingsBtn" class="btn secondary">Cancel</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "CareerFlow Job Tracker",
+  "version": "1.0",
+  "description": "Easily add job applications to CareerFlow by pasting a URL.",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Add to CareerFlow"
+  }
+}
