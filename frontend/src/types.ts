@@ -60,4 +60,4 @@ export interface ResumeData {
   uploaded_at: string
 }
 
-export type View = 'dashboard' | 'profile'
+export type View = 'dashboard' | 'profile' | 'settings'

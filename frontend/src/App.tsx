@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import Dashboard from './components/Dashboard'
 import ProfilePage from './components/ProfilePage'
+import SettingsPage from './components/SettingsPage'
 import AddJobModal from './components/AddJobModal'
 
 export default function App() {
@@ -67,7 +68,7 @@ export default function App() {
         onNavigate={v => { setView(v); setSearch('') }}
         onNewJob={() => setShowAddModal(true)}
       />
-      <Header search={search} onSearch={setSearch} />
+      <Header search={search} onSearch={setSearch} onOpenSettings={() => setView('settings')} />
 
       {view === 'dashboard' && (
         <Dashboard jobs={jobs} search={search} onJobsChange={setJobs} />
@@ -75,6 +76,7 @@ export default function App() {
       {view === 'profile' && (
         <ProfilePage resume={resume} onResumeChange={setResume} />
       )}
+      {view === 'settings' && <SettingsPage />}
 
       {showAddModal && (
         <AddJobModal

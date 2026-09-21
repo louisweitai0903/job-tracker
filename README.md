@@ -18,6 +18,7 @@ This repository contains the **React Frontend** and the **Rust API Gateway**, op
 - **Smart URL Scraping**: Simply paste a LinkedIn job URL. The Rust backend safely scrapes the text using realistic browser headers, and the AI service automatically analyzes the role.
 - **Deep Insights**: Receive an instant 0-100 fit score, an analysis of required skills you're missing, application urgency levels, and a summary of the hiring company's background via Google Search Grounding.
 - **Inline Status Editing**: Quickly bump applications through your pipeline using intuitive inline dropdowns on the dashboard job cards.
+- **AI Response Schema Builder**: A Settings page for visually building the JSON Schemas passed to `ai-service` as `schema_definition`, via drag-and-drop. Backed by the reusable sibling project [`schema-builder`](../schema-builder), which can be dropped into any project that talks to `ai-service`.
 
 ---
 

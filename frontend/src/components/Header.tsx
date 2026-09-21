@@ -1,9 +1,10 @@
 interface Props {
   search: string
   onSearch: (v: string) => void
+  onOpenSettings: () => void
 }
 
-export default function Header({ search, onSearch }: Props) {
+export default function Header({ search, onSearch, onOpenSettings }: Props) {
   return (
     <header className="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-surface flex items-center justify-between px-margin-desktop z-40 border-b border-outline-variant/30">
       <div className="relative flex-1 max-w-md">
@@ -21,7 +22,10 @@ export default function Header({ search, onSearch }: Props) {
         <button className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-all">
           <span className="material-symbols-outlined">notifications</span>
         </button>
-        <button className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-all">
+        <button
+          onClick={onOpenSettings}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-all"
+        >
           <span className="material-symbols-outlined">settings</span>
         </button>
       </div>

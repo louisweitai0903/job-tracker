@@ -72,6 +72,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules # prevent container node_modules from being overwritten by local mount
+      # frontend/package.json depends on "schema-builder" via "file:../../schema-builder";
+      # that resolves (from /app) to /schema-builder inside the container, so mount the
+      # sibling repo there. Requires ../schema-builder to exist next to this repo on the host.
+      - ../schema-builder:/schema-builder
     depends_on:
       - backend
 

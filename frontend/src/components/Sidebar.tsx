@@ -10,6 +10,7 @@ export default function Sidebar({ activeView, onNavigate, onNewJob }: Props) {
   const navItems: { view: View; icon: string; label: string }[] = [
     { view: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
     { view: 'profile', icon: 'person', label: 'My Profile' },
+    { view: 'settings', icon: 'settings', label: 'Settings' },
   ]
 
   return (
